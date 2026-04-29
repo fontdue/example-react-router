@@ -106,14 +106,14 @@ export default defineConfig({
 
 ## Deploying to Netlify
 
-This example is wired for Netlify SSR. Netlify auto-detects React Router 7 and deploys the SSR build as a serverless function — no adapter package needed.
+This example is wired for Netlify SSR via the official adapter `@netlify/vite-plugin-react-router`, which generates `.netlify/v1/functions/react-router-server.mjs` at build time. Netlify deploys that as the SSR request handler. (Netlify's framework auto-detection identifies RR7 but does *not* wire up the function on its own — the plugin is required.)
 
 To deploy a fork:
 
 1. **Build settings** (Netlify UI):
    - Build command: `npm run build`
    - Publish directory: `build/client`
-   - Functions directory: leave blank — Netlify's React Router runtime wires the SSR function automatically.
+   - Functions directory: leave blank — the plugin writes to `.netlify/v1/functions/` automatically.
 2. **Environment variables**: add `VITE_FONTDUE_URL` under Site configuration → Environment variables. `VITE_*` vars are inlined at build time, so it must be set before the first build runs. Also set `REVALIDATE_TOKEN` to a long random string — required by `/api/revalidate` (see below).
 3. **CORS allow-list**: once Netlify gives you the deploy URL (e.g. `https://your-site.netlify.app`), add it to your Fontdue tenant's allowed origins. If you want PR previews to work, allow-list the `https://deploy-preview-*--your-site.netlify.app` pattern too.
 

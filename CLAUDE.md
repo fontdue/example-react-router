@@ -25,7 +25,9 @@ There is no test runner or linter configured.
 
 The whole point of this repo is the SSR data layer wiring. Read these files together, not separately:
 
-- **`vite.config.ts`** — registers the `fontdue-js/vite` plugin. The plugin is non-optional: it sets up `vite-plugin-cjs-interop` for `react-relay` / `relay-runtime` / `draft-js` / `fbjs` (CJS deps that break strict ESM named imports), `ssr.noExternal: ['fontdue-js']` so that interop runs over fontdue-js's own source, `optimizeDeps.include` for the browser pre-bundle, and `define: { global: 'globalThis' }` for `fbjs`. If imports of fontdue-js subpaths suddenly break in dev or build, the plugin or its included dep list is the first place to look.
+- **`vite.config.ts`** — registers two non-optional plugins:
+  - `fontdue-js/vite` sets up `vite-plugin-cjs-interop` for `react-relay` / `relay-runtime` / `draft-js` / `fbjs` (CJS deps that break strict ESM named imports), `ssr.noExternal: ['fontdue-js']` so that interop runs over fontdue-js's own source, `optimizeDeps.include` for the browser pre-bundle, and `define: { global: 'globalThis' }` for `fbjs`. If imports of fontdue-js subpaths suddenly break in dev or build, the plugin or its included dep list is the first place to look.
+  - `@netlify/vite-plugin-react-router` generates `.netlify/v1/functions/react-router-server.mjs` at build time so Netlify deploys an SSR function. Netlify's framework auto-detection identifies RR7 but does *not* wire up the function on its own — without this plugin the deploy is static-only and every route 404s.
 
 - **`app/root.tsx`** — the layout-level data layer. Its `loader` runs three things in parallel: `loadFontdueProviderQuery()` (theme/test-mode/tracking aux UI), `loadCartButtonQuery()` (cart count), and `fetchGraphql<RootLayoutQuery>(…)` (logo, nav pages, footer text, UI font, settings). The `<FontdueProvider preloadedQuery={…}>` commits the aux payload into the shared client Relay env on hydration so theme/banner/tracking render with no flash and no refetch. `<StoreModal>` is mounted with **no** `preloadedQuery` — the modal is closed at SSR; cart data fetches lazily on open. Don't add a preload there.
 
