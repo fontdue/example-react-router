@@ -4,4 +4,5 @@ export default [
   index("routes/home.tsx"),
   route("fonts/:slug", "routes/fonts.$slug.tsx"),
   route("test-fonts", "routes/test-fonts.tsx"),
+  route("api/revalidate", "routes/api.revalidate.ts"),
 ] satisfies RouteConfig;

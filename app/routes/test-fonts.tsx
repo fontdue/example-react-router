@@ -18,14 +18,7 @@ export async function loader() {
 
 export default function TestFonts({ loaderData }: Route.ComponentProps) {
   return (
-    <main
-      style={{
-        fontFamily: "system-ui, sans-serif",
-        margin: "0 auto",
-        maxWidth: 960,
-        padding: "2rem",
-      }}
-    >
+    <>
       <h1 style={{ fontSize: "1.5rem", marginBottom: "1rem" }}>Test fonts</h1>
       <p style={{ color: "#666", fontSize: "0.875rem" }}>
         Two preloaded forms — both hydrate without re-fetching their settings.
@@ -48,6 +41,6 @@ export default function TestFonts({ loaderData }: Route.ComponentProps) {
           intro="Get notified about new releases."
         />
       </div>
-    </main>
+    </>
   );
 }

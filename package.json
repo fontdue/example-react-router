@@ -4,11 +4,15 @@
   "type": "module",
   "scripts": {
     "build": "react-router build",
-    "dev": "react-router dev",
+    "dev": "run-p dev:rr codegen:watch",
+    "dev:rr": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "codegen": "graphql-codegen --config codegen.ts",
+    "codegen:watch": "graphql-codegen --config codegen.ts --watch"
   },
   "dependencies": {
+    "@netlify/functions": "^5.2.0",
     "@react-router/node": "7.14.0",
     "@react-router/serve": "7.14.0",
     "fontdue-js": "^3.0.0-alpha3",
@@ -18,11 +22,17 @@
     "react-router": "7.14.0"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "^6.3.1",
+    "@graphql-codegen/typescript": "^5.0.10",
+    "@graphql-codegen/typescript-operations": "^5.1.0",
     "@react-router/dev": "7.14.0",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^22",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "dotenv": "^17.4.2",
+    "graphql": "^16.13.2",
+    "npm-run-all": "^4.1.5",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
     "vite": "^8.0.3"

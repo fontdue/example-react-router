@@ -2,38 +2,57 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## What this repo is
+
+A demo/integration POC showing how to consume `fontdue-js@3.x` (alpha) — the framework-agnostic preload API, Linear FD-537 — from a React Router 7 SSR app. The same preload pattern is meant to apply to any React-rendering SSR framework (Astro, TanStack Start, Vike, Remix, Next.js). Pin a specific `fontdue-js` alpha version; the 3.x surface is unstable until 3.0.0 ships.
+
+Sibling POCs validating the same API on other frameworks (useful for cross-checking patterns):
+- `~/code/fontdue/fontdue-astro-example` — Astro (frontmatter returning `preloadedQuery`).
+- `~/code/fontdue/fontdue-example-next` — Next.js 15 App Router (RSC magic path via async server component).
+
 ## Commands
 
-- `npm run dev` — start dev server with HMR at http://localhost:5173
-- `npm run build` — production build to `build/` (outputs `client/` static assets and `server/index.js`)
-- `npm run start` — serve the built app via `react-router-serve`
-- `npm run typecheck` — runs `react-router typegen` then `tsc`. Run this after changing routes; typegen writes `./.react-router/types/` which `+types/<route>` imports rely on.
+- `cp .env.example .env` (required before first run; sets `VITE_FONTDUE_URL`)
+- `npm install`
+- `npm run dev` — runs `react-router dev` and `graphql-codegen --watch` in parallel via `npm-run-all`. Editing a `.graphql` file regenerates `app/queries/operations-types.ts` automatically. App at http://localhost:5173.
+- `npm run codegen` — one-shot codegen.
+- `npm run build` / `npm run start` — production build and serve via `react-router-serve`.
+- `npm run typecheck` — `react-router typegen && tsc`. Run after changing routes; typegen writes `./.react-router/types/` which `+types/<route>` imports rely on.
 
 There is no test runner or linter configured.
 
 ## Architecture
 
-This is a React Router v7 SSR app whose purpose is to demonstrate `fontdue-js` integration. The whole codebase is intentionally small (a handful of routes under `app/routes/`); the interesting pattern lives in how those routes consume `fontdue-js`.
+The whole point of this repo is the SSR data layer wiring. Read these files together, not separately:
 
-### The fontdue-js preload pattern
+- **`vite.config.ts`** — registers the `fontdue-js/vite` plugin. The plugin is non-optional: it sets up `vite-plugin-cjs-interop` for `react-relay` / `relay-runtime` / `draft-js` / `fbjs` (CJS deps that break strict ESM named imports), `ssr.noExternal: ['fontdue-js']` so that interop runs over fontdue-js's own source, `optimizeDeps.include` for the browser pre-bundle, and `define: { global: 'globalThis' }` for `fbjs`. If imports of fontdue-js subpaths suddenly break in dev or build, the plugin or its included dep list is the first place to look.
 
-Every `fontdue-js` component (`TypeTester`, `TypeTesters`, `CharacterViewer`, `BuyButton`, `CartButton`, `StoreModal`/`FontdueProvider`, `TestFontsForm`, `NewsletterSignup`) is paired with a `loadXxxQuery()` function. The contract is:
+- **`app/root.tsx`** — the layout-level data layer. Its `loader` runs three things in parallel: `loadFontdueProviderQuery()` (theme/test-mode/tracking aux UI), `loadCartButtonQuery()` (cart count), and `fetchGraphql<RootLayoutQuery>(…)` (logo, nav pages, footer text, UI font, settings). The `<FontdueProvider preloadedQuery={…}>` commits the aux payload into the shared client Relay env on hydration so theme/banner/tracking render with no flash and no refetch. `<StoreModal>` is mounted with **no** `preloadedQuery` — the modal is closed at SSR; cart data fetches lazily on open. Don't add a preload there.
 
-1. Call `loadXxxQuery(args)` inside the route `loader` (server-side). Run multiple loads in `Promise.all` so they parallelize.
-2. Return the resulting `preloadedQuery` value(s) from the loader.
-3. Pass `preloadedQuery={loaderData.xxxPreload}` to the component in the route's default export.
+  `root.tsx` also exports `headers()` setting `Netlify-CDN-Cache-Control` (SWR) and `Netlify-Cache-Tag: fontdue`. RR7 uses leaf-route headers, so child routes inherit these unless they export their own.
 
-The component then hydrates without re-fetching. Breaking this pattern (e.g. rendering a fontdue component without `preloadedQuery`) defeats the whole point of the example.
+- **Page route loaders** (`app/routes/home.tsx`, `app/routes/fonts.$slug.tsx`, `app/routes/test-fonts.tsx`) — each route's `loader` calls the matching `load*Query` for the components it renders, in parallel via `Promise.all`. `home.tsx` and `fonts.$slug.tsx` also issue a `fetchGraphql` call alongside the preloads — both run in the same `Promise.all` so the page costs one network round-trip. Each component (`TypeTester`, `TypeTesters`, `CharacterViewer`, `BuyButton`, `TestFontsForm`, `NewsletterSignup`, etc.) is then rendered with its own `preloadedQuery` prop. Multiple islands share one Relay env + one Redux store via module-level singletons inside fontdue-js — no duplicate fetches across islands on the same page.
 
-`app/root.tsx` does this at the layout level for `FontdueProvider` (commits aux payload — theme, test mode, tracking — into the client Relay env) and `CartButton` (so the header shows correct cart count on first paint). Page routes do it for their own components.
+- **`app/lib/graphql.ts`** — a 25-line `fetchGraphql<Q, V>(name, query, variables)` helper. `import.meta.env.VITE_FONTDUE_URL` provides the endpoint.
 
-### Configuration
+- **`app/queries/*.graphql`** — query documents. Imported into route loaders with Vite's `?raw` suffix so the string is inlined at build time. The matching TypeScript types live in `app/queries/operations-types.ts`, generated by `@graphql-codegen/cli` (config in `codegen.ts`). The generated file is committed so contributors don't need a tenant URL just to type-check.
 
-- `vite.config.ts` registers the `fontdue-js/vite` plugin alongside `@tailwindcss/vite` and `@react-router/dev/vite`. The fontdue plugin is required for `fontdue-js` imports to resolve correctly.
-- `react-router.config.ts` has `ssr: true`. Switching to SPA mode would break the loader-based preload pattern.
-- `VITE_FONTDUE_URL` in `.env` points the fontdue client at the backend (e.g. `https://example.fontdue.xyz`).
+- **`app/routes/api.revalidate.ts`** — POST-only resource route (action handler, no default component). Validates `?token=` against `process.env.REVALIDATE_TOKEN` and calls Netlify's `purgeCache({ tags: ['fontdue'] })`. Exports `headers()` returning `Cache-Control: no-store` to override the root's CDN headers. Wired into Fontdue at **Website settings → Deploy hook URL**.
+
+Backend URL: `VITE_FONTDUE_URL` in `.env`. fontdue-js auto-reads `PUBLIC_FONTDUE_URL` / `VITE_FONTDUE_URL` from `import.meta.env` on both server and client — no explicit `configure()` call. The default tenant `https://example.fontdue.xyz` has CORS allow-listed `http://localhost:5173`; pointing at another tenant requires that tenant to allow-list the dev origin.
+
+## Conventions specific to this repo
+
+- Pages must be SSR (`ssr: true` in `react-router.config.ts`) — the `load*Query` and `fetchGraphql` calls run in route loaders.
+- Always preload in parallel with `Promise.all` when a route has multiple `load*Query` / `fetchGraphql` calls — that's the established pattern across all routes.
+- The same component import (e.g. `fontdue-js/TypeTester`) yields both the loader (`load*Query` named export) and the component (default export). Don't reach for separate import paths.
+- A `<TypeTester>` placed inside an existing `<FontdueProvider>` tree accepts the lazy `{familyName, styleName}` shape and auto-detects the parent provider, skipping its own self-wrap. This RR7 example uses the eager `preloadedQuery` shape because all data is preloaded in loaders.
+- Mount exactly one `<FontdueProvider>` per page (in `app/root.tsx`). It owns the aux UI (`ThemeConfig`, `TestModeBanner`, `ConsentBanner`, `Tracking`, `ServerConfigProvider`); per-component islands self-wrap in an internal `FontdueContextProvider` that does *not* claim the aux-UI slot.
+- Routes are explicit in `app/routes.ts` (not file-system routing). Adding a route means editing that file and creating the corresponding module under `app/routes/`.
 - `~/*` in `tsconfig.json` maps to `./app/*`.
 
-### Routes
+## Caching
 
-Defined explicitly in `app/routes.ts` (not file-system routing). Adding a route means editing that file and creating the corresponding module under `app/routes/`.
+CDN SWR caching is set in `app/root.tsx` via the `headers` export. Default policy: `s-maxage=300` (5 min fresh on edge) + `stale-while-revalidate=86400` (24h serving-stale-while-regenerating). Browser `Cache-Control: max-age=0, must-revalidate` so users always hit the edge.
+
+To opt a route out of caching, export `headers()` from that route returning different values — RR7 uses the deepest matched route's headers, no merging. `app/routes/api.revalidate.ts` does this with `Cache-Control: no-store`.
