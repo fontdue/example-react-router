@@ -1,0 +1,8 @@
+# Pin npm 11+ so that platform-specific optional dependencies are
+# correctly resolved into package-lock.json regardless of the dev
+# machine that generated it. Without this, lockfiles generated on
+# macOS skip Linux-x64 native bindings (Rolldown, Rollup,
+# @tailwindcss/oxide, lightningcss, @oxc-parser, etc.) and Netlify
+# builds fail with "Cannot find native binding" — npm/cli#4828.
+[build.environment]
+  NPM_VERSION = "11"
