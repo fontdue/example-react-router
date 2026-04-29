@@ -121,25 +121,12 @@ export default function App({ loaderData }: Route.ComponentProps) {
         moreThanOneCollection={moreThanOneCollection}
         cartPreload={cartPreload}
       />
-      <main
-        style={{
-          fontFamily: "system-ui, sans-serif",
-          margin: "0 auto",
-          maxWidth: 960,
-          padding: "2rem",
-        }}
-      >
+      <main className="mx-auto max-w-[960px] p-8">
         <Outlet />
       </main>
       {settings?.footerText && (
         <footer
-          style={{
-            maxWidth: 960,
-            margin: "4rem auto 2rem",
-            padding: "0 2rem",
-            color: "#666",
-            fontSize: "0.875rem",
-          }}
+          className="mx-auto mt-16 mb-8 max-w-[960px] px-8 text-sm text-gray-500"
           dangerouslySetInnerHTML={{ __html: settings.footerText }}
         />
       )}
@@ -164,42 +151,27 @@ function SiteHeader({
 }) {
   const { pathname } = useLocation();
   const isActive = (href: string) => pathname === href;
-  const linkStyle = (href: string) => ({
-    color: "#333",
-    textDecoration: "none",
-    fontWeight: isActive(href) ? 600 : 400,
-  });
+  const linkClass = (href: string) =>
+    `text-gray-800 no-underline hover:underline ${isActive(href) ? "font-semibold" : "font-normal"}`;
 
   return (
-    <header
-      style={{
-        position: "sticky",
-        top: 0,
-        background: "white",
-        borderBottom: "1px solid #eee",
-        padding: "1rem 2rem",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        zIndex: 10,
-      }}
-    >
-      <nav style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-        <Link to="/" style={linkStyle("/")}>
+    <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-8 py-4">
+      <nav className="flex items-center gap-4">
+        <Link to="/" className={linkClass("/")}>
           {viewer.logo ? (
             <img
               src={viewer.logo.url}
               alt={viewer.settings?.title ?? "Logo"}
               width={(viewer.logo.meta.width ?? 100) / 2}
               height={(viewer.logo.meta.height ?? 100) / 2}
-              style={{ display: "block" }}
+              className="block"
             />
           ) : (
             (viewer.settings?.title ?? "Home")
           )}
         </Link>
         {moreThanOneCollection && (
-          <Link to="/" style={linkStyle("/")}>
+          <Link to="/" className={linkClass("/")}>
             Fonts
           </Link>
         )}
@@ -209,13 +181,13 @@ function SiteHeader({
               <Link
                 key={node.id}
                 to={`/${node.slug?.name ?? ""}`}
-                style={linkStyle(`/${node.slug?.name ?? ""}`)}
+                className={linkClass(`/${node.slug?.name ?? ""}`)}
               >
                 {node.title}
               </Link>
             ),
         )}
-        <Link to="/test-fonts" style={linkStyle("/test-fonts")}>
+        <Link to="/test-fonts" className={linkClass("/test-fonts")}>
           Test fonts
         </Link>
       </nav>
@@ -241,11 +213,11 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto">
+    <main className="container mx-auto p-4 pt-16">
       <h1>{message}</h1>
       <p>{details}</p>
       {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
+        <pre className="w-full overflow-x-auto p-4">
           <code>{stack}</code>
         </pre>
       )}

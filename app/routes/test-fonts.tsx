@@ -19,22 +19,18 @@ export async function loader() {
 export default function TestFonts({ loaderData }: Route.ComponentProps) {
   return (
     <>
-      <h1 style={{ fontSize: "1.5rem", marginBottom: "1rem" }}>Test fonts</h1>
-      <p style={{ color: "#666", fontSize: "0.875rem" }}>
+      <h1 className="mb-4 text-2xl">Test fonts</h1>
+      <p className="text-sm text-gray-500">
         Two preloaded forms — both hydrate without re-fetching their settings.
       </p>
 
-      <h2 style={{ fontSize: "1.125rem", marginTop: "2.5rem" }}>
-        Test fonts form
-      </h2>
-      <div style={{ marginTop: "1rem", border: "1px solid #eee", padding: "1rem" }}>
+      <h2 className="mt-10 text-lg">Test fonts form</h2>
+      <div className="mt-4 border border-gray-200 p-4">
         <TestFontsForm preloadedQuery={loaderData.testFontsPreload} />
       </div>
 
-      <h2 style={{ fontSize: "1.125rem", marginTop: "2.5rem" }}>
-        Newsletter signup
-      </h2>
-      <div style={{ marginTop: "1rem", border: "1px solid #eee", padding: "1rem" }}>
+      <h2 className="mt-10 text-lg">Newsletter signup</h2>
+      <div className="mt-4 border border-gray-200 p-4">
         <NewsletterSignup
           preloadedQuery={loaderData.newsletterPreload}
           title="Join the newsletter"

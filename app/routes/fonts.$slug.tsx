@@ -78,33 +78,25 @@ export default function FontDetail({ loaderData }: Route.ComponentProps) {
         <style dangerouslySetInnerHTML={{ __html: featureFontFace }} />
       )}
       <h1
-        style={{
-          fontSize: "3rem",
-          lineHeight: 1.05,
-          margin: "0.5rem 0 1rem",
-          fontFamily: feature
-            ? `"${feature.cssFamily} ${feature.name}", system-ui, sans-serif`
-            : undefined,
-        }}
+        className="my-2 mb-4 text-5xl leading-[1.05]"
+        style={
+          feature
+            ? {
+                fontFamily: `"${feature.cssFamily} ${feature.name}", system-ui, sans-serif`,
+              }
+            : undefined
+        }
       >
         {collection.name}
         {collection.collectionType === "superfamily" && " Collection"}
       </h1>
 
       {collection.shortDescription && (
-        <p
-          style={{
-            color: "#444",
-            fontSize: "1.125rem",
-            margin: "0 0 1.5rem",
-          }}
-        >
-          {collection.shortDescription}
-        </p>
+        <p className="mb-6 text-lg text-gray-700">{collection.shortDescription}</p>
       )}
 
       {heroImage && (
-        <figure style={{ margin: "0 0 1.5rem" }}>
+        <figure className="mb-6">
           {heroImage.meta?.mimeType === "video/mp4" ? (
             <video
               src={heroImage.url!}
@@ -112,7 +104,7 @@ export default function FontDetail({ loaderData }: Route.ComponentProps) {
               muted
               autoPlay
               loop
-              style={{ width: "100%", height: "auto", display: "block" }}
+              className="block h-auto w-full"
             />
           ) : (
             <img
@@ -120,20 +112,13 @@ export default function FontDetail({ loaderData }: Route.ComponentProps) {
               width={heroImage.meta?.width ?? undefined}
               height={heroImage.meta?.height ?? undefined}
               alt={heroImage.description ?? ""}
-              style={{ width: "100%", height: "auto", display: "block" }}
+              className="block h-auto w-full"
             />
           )}
         </figure>
       )}
 
-      <div
-        style={{
-          display: "flex",
-          gap: "1rem",
-          alignItems: "center",
-          margin: "1rem 0 2rem",
-        }}
-      >
+      <div className="my-4 mb-8 flex items-center gap-4">
         <BuyButton
           preloadedQuery={buyButtonPreload}
           collectionName={collection.name}
@@ -145,14 +130,8 @@ export default function FontDetail({ loaderData }: Route.ComponentProps) {
         )}
       </div>
 
-      <h2 style={{ fontSize: "1.125rem", marginTop: "2.5rem" }}>TypeTesters</h2>
-      <div
-        style={{
-          marginTop: "1rem",
-          border: "1px solid #eee",
-          padding: "1rem",
-        }}
-      >
+      <h2 className="mt-10 text-lg">TypeTesters</h2>
+      <div className="mt-4 border border-gray-200 p-4">
         <TypeTesters
           preloadedQuery={typeTestersPreload}
           defaultMode="local"
@@ -161,21 +140,13 @@ export default function FontDetail({ loaderData }: Route.ComponentProps) {
 
       {collection.description && (
         <section
-          style={{ margin: "2rem 0", lineHeight: 1.6 }}
+          className="my-8 leading-relaxed"
           dangerouslySetInnerHTML={{ __html: collection.description }}
         />
       )}
 
-      <h2 style={{ fontSize: "1.125rem", marginTop: "2.5rem" }}>
-        Character viewer
-      </h2>
-      <div
-        style={{
-          marginTop: "1rem",
-          border: "1px solid #eee",
-          padding: "1rem",
-        }}
-      >
+      <h2 className="mt-10 text-lg">Character viewer</h2>
+      <div className="mt-4 border border-gray-200 p-4">
         <CharacterViewer preloadedQuery={characterViewerPreload} />
       </div>
     </>

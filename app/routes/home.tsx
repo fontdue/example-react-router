@@ -70,49 +70,33 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       {featureFontFaces && (
         <style dangerouslySetInnerHTML={{ __html: featureFontFaces }} />
       )}
-      <h1 style={{ fontSize: "1.5rem", marginBottom: "1rem" }}>Fonts</h1>
-      <p style={{ color: "#666", fontSize: "0.875rem" }}>
+      <h1 className="mb-4 text-2xl">Fonts</h1>
+      <p className="text-sm text-gray-500">
         Server-rendered from <code>Index.graphql</code>. Each collection name
         is set in its own feature style; the type testers below are
         server-preloaded Relay islands.
       </p>
 
-      <section
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.5rem",
-          margin: "1.5rem 0",
-        }}
-      >
+      <section className="my-6 flex flex-col gap-2">
         {collections.map((node) => (
           <h2
             key={node.id}
+            className="m-0 text-[2.5rem] leading-[1.1]"
             style={{
-              fontSize: "2.5rem",
-              margin: 0,
-              lineHeight: 1.1,
               ["--optical-adjustment" as never]: node.opticalAdjustment ?? 0,
             }}
           >
             <Link
               to={`/fonts/${node.slug!.name}`}
+              className="text-inherit no-underline hover:underline"
               style={{
-                color: "inherit",
-                textDecoration: "none",
                 fontFamily: `"${node.featureStyle?.cssFamily} ${node.featureStyle?.name}", system-ui, sans-serif`,
               }}
             >
               {node.name}
             </Link>
             {node.isNew && (
-              <span
-                style={{
-                  color: "#c00",
-                  fontSize: "0.75rem",
-                  verticalAlign: "super",
-                }}
-              >
+              <span className="align-super text-xs text-red-700">
                 &nbsp;New
               </span>
             )}
@@ -122,25 +106,13 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
       {testerCollections.length > 0 && (
         <>
-          <h2 style={{ fontSize: "1.125rem", marginTop: "2.5rem" }}>
-            Try them out
-          </h2>
+          <h2 className="mt-10 text-lg">Try them out</h2>
           {testerCollections.map((c, i) => (
             <div
               key={c.id}
-              style={{
-                marginTop: "1.5rem",
-                border: "1px solid #eee",
-                padding: "1rem",
-              }}
+              className="mt-6 border border-gray-200 p-4"
             >
-              <p
-                style={{
-                  margin: "0 0 0.5rem",
-                  color: "#666",
-                  fontSize: "0.875rem",
-                }}
-              >
+              <p className="m-0 mb-2 text-sm text-gray-500">
                 {c.name} — {c.featureStyle?.name}
               </p>
               <TypeTester
