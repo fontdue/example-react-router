@@ -8,8 +8,7 @@ import {
   ScrollRestoration,
   useLocation,
 } from "react-router";
-import { loadFontdueProviderQuery } from "fontdue-js";
-import FontdueProvider from "fontdue-js/FontdueProvider";
+import FontdueProvider, { loadFontdueProviderQuery } from "fontdue-js/FontdueProvider";
 import StoreModal from "fontdue-js/StoreModal";
 import CartButton, { loadCartButtonQuery } from "fontdue-js/CartButton";
 
