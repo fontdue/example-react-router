@@ -10,7 +10,7 @@ import {
 } from "react-router";
 import FontdueProvider, { loadFontdueProviderQuery } from "fontdue-js/FontdueProvider";
 import StoreModal from "fontdue-js/StoreModal";
-import CartButton, { loadCartButtonQuery } from "fontdue-js/CartButton";
+import CartButton from "fontdue-js/CartButton";
 
 import type { Route } from "./+types/root";
 import "./app.css";
@@ -27,12 +27,11 @@ import type { RootLayoutQuery } from "./queries/operations-types";
 // hydration; the GraphQL data drives the static chrome (logo, nav,
 // footer, settings).
 export async function loader() {
-  const [fontduePreload, cartPreload, layoutData] = await Promise.all([
+  const [fontduePreload, layoutData] = await Promise.all([
     loadFontdueProviderQuery(),
-    loadCartButtonQuery(),
     fetchGraphql<RootLayoutQuery>("RootLayout", RootLayoutDoc),
   ]);
-  return { fontduePreload, cartPreload, layoutData };
+  return { fontduePreload, layoutData };
 }
 
 // CDN-side caching for SSR pages on Netlify. The edge serves cached
@@ -83,7 +82,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App({ loaderData }: Route.ComponentProps) {
-  const { fontduePreload, cartPreload, layoutData } = loaderData;
+  const { fontduePreload, layoutData } = loaderData;
   const { viewer } = layoutData;
   const settings = viewer.settings;
   const pages =
@@ -118,7 +117,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
         viewer={viewer}
         pages={pages}
         moreThanOneCollection={moreThanOneCollection}
-        cartPreload={cartPreload}
       />
       <main className="mx-auto max-w-[960px] p-8">
         <Outlet />
@@ -137,7 +135,6 @@ function SiteHeader({
   viewer,
   pages,
   moreThanOneCollection,
-  cartPreload,
 }: {
   viewer: RootLayoutQuery["viewer"];
   pages: NonNullable<
@@ -146,7 +143,6 @@ function SiteHeader({
     >[number]
   >["node"][];
   moreThanOneCollection: boolean;
-  cartPreload: Awaited<ReturnType<typeof loadCartButtonQuery>>;
 }) {
   const { pathname } = useLocation();
   const isActive = (href: string) => pathname === href;
@@ -190,7 +186,7 @@ function SiteHeader({
           Test fonts
         </Link>
       </nav>
-      <CartButton preloadedQuery={cartPreload} suffix=" ({count})" />
+      <CartButton suffix=" ({count})" />
     </header>
   );
 }
