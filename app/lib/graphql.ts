@@ -6,7 +6,7 @@ import { createFontdueFetch, FontdueNotFoundError } from "fontdue-js/server";
 //
 // There's no per-request binding: because the root route's middleware (see
 // app/root.tsx) wraps every loader in runWithPreview, this fetcher automatically
-// forwards the staff preview token when a staff member is previewing (revealing
+// forwards the admin preview token when an admin is previewing (revealing
 // unpublished fonts), and sends a plain request otherwise. The same is true of
 // every fontdue-js preload helper (loadTypeTesterQuery, loadFontdueProviderQuery,
 // …) — call them with just their variables and they pick up preview from the

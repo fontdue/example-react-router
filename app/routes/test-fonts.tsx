@@ -9,7 +9,7 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function loader() {
-  // This page only preloads fontdue-js components. When staff are previewing,
+  // This page only preloads fontdue-js components. When an admin is previewing,
   // these reveal unpublished fonts too — preview rides the ambient context set
   // by the root middleware, so nothing is threaded here.
   const [testFontsPreload, newsletterPreload] = await Promise.all([

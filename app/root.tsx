@@ -21,10 +21,10 @@ import RootLayoutDoc from "./queries/RootLayout.graphql?raw";
 import type { RootLayoutQuery } from "./queries/operations-types";
 
 // Root middleware wraps every loader on every route. runWithPreview puts the
-// staff preview token (from the preview cookie) into an ambient context for the
+// admin preview token (from the preview cookie) into an ambient context for the
 // whole request, so the fetcher and all fontdue-js preloads reveal unpublished
 // fonts with no per-loader plumbing — and it forces preview responses out of
-// the shared CDN cache so a staff render is never served to the public. Public
+// the shared CDN cache so an admin render is never served to the public. Public
 // requests pass through untouched and stay cacheable (see `headers` below).
 export const middleware: Route.MiddlewareFunction[] = [
   ({ request }, next) => runWithPreview(request, next),

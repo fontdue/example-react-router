@@ -1,7 +1,7 @@
 import { handlePreviewRequest } from "fontdue-js/preview";
 import type { Route } from "./+types/api.preview";
 
-// Preview enter/exit. The Fontdue admin toolbar — shown only to logged-in staff
+// Preview enter/exit. The Fontdue admin toolbar — shown only to logged-in admins
 // by <FontdueProvider> — POSTs a short-lived token here to turn preview on, and
 // DELETEs to turn it off. handlePreviewRequest sets the preview cookies (an
 // httpOnly token + a readable marker that the toolbar checks); the root route's
