@@ -1,4 +1,5 @@
 import {
+  data,
   isRouteErrorResponse,
   Link,
   Links,
@@ -15,9 +16,13 @@ import CartButton from "fontdue-js/CartButton";
 import type { Route } from "./+types/root";
 import "./app.css";
 import "fontdue-js/fontdue.css";
-import { fetchGraphql } from "./lib/graphql";
+import { fontdueGraphql } from "./lib/graphql";
 import RootLayoutDoc from "./queries/RootLayout.graphql?raw";
 import type { RootLayoutQuery } from "./queries/operations-types";
+
+// Sentinel the loader sets when staff are previewing, so `headers` below knows
+// to keep this render out of the shared CDN cache.
+const NO_CACHE = "private, no-store";
 
 // The route loader is the SSR data layer — equivalent to Astro's
 // frontmatter or Next's `async function RootLayout()` server component.
@@ -26,12 +31,18 @@ import type { RootLayoutQuery } from "./queries/operations-types";
 // layout. The fontdue payloads commit into the client Relay env on
 // hydration; the GraphQL data drives the static chrome (logo, nav,
 // footer, settings).
-export async function loader() {
+export async function loader({ request }: Route.LoaderArgs) {
+  const { fetchGraphql, preview, previewing } = fontdueGraphql(request);
   const [fontduePreload, layoutData] = await Promise.all([
-    loadFontdueProviderQuery(),
+    loadFontdueProviderQuery(preview),
     fetchGraphql<RootLayoutQuery>("RootLayout", RootLayoutDoc),
   ]);
-  return { fontduePreload, layoutData };
+  const payload = { fontduePreload, layoutData };
+  // A staff preview reveals unpublished fonts, so it must never be cached at
+  // the shared CDN — flag it for `headers` (which sees this via loaderHeaders).
+  return previewing
+    ? data(payload, { headers: { "Cache-Control": NO_CACHE } })
+    : payload;
 }
 
 // CDN-side caching for SSR pages on Netlify. The edge serves cached
@@ -41,7 +52,12 @@ export async function loader() {
 // holds. Tag every page with `fontdue` so /api/revalidate can purge
 // them all at once when Fontdue data changes. Leaf-route headers in
 // RR7 override these — api.revalidate.ts sets `no-store` to opt out.
-export function headers() {
+export function headers({ loaderHeaders }: Route.HeadersArgs) {
+  // Preview renders opt out of the CDN cache (flagged by the loader above) so
+  // a logged-in staff member's revealed page is never served to the public.
+  if (loaderHeaders.get("Cache-Control") === NO_CACHE) {
+    return { "Cache-Control": NO_CACHE };
+  }
   return {
     "Netlify-CDN-Cache-Control":
       "public, max-age=0, s-maxage=300, stale-while-revalidate=86400",

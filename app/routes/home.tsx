@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import type { Route } from "./+types/home";
 import TypeTester, { loadTypeTesterQuery } from "fontdue-js/TypeTester";
-import { fetchGraphql } from "../lib/graphql";
+import { fontdueGraphql } from "../lib/graphql";
 import IndexDoc from "../queries/Index.graphql?raw";
 import type { IndexQuery } from "../queries/operations-types";
 
@@ -19,7 +19,9 @@ export function meta({}: Route.MetaArgs) {
 // fontdue-js Relay preloads run together in one Promise.all. The Relay
 // payloads hydrate the islands without an extra round-trip; the GraphQL
 // data drives the static markup of the page.
-export async function loader() {
+export async function loader({ request }: Route.LoaderArgs) {
+  // Request-bound fetcher; in preview it lists unpublished collections too.
+  const { fetchGraphql, preview } = fontdueGraphql(request);
   const indexData = await fetchGraphql<IndexQuery>("Index", IndexDoc);
 
   const collections =
@@ -35,10 +37,13 @@ export async function loader() {
 
   const testerPreloads = await Promise.all(
     testerCollections.map((c) =>
-      loadTypeTesterQuery({
-        familyName: c.featureStyle!.cssFamily!,
-        styleName: c.featureStyle!.name!,
-      }),
+      loadTypeTesterQuery(
+        {
+          familyName: c.featureStyle!.cssFamily!,
+          styleName: c.featureStyle!.name!,
+        },
+        preview,
+      ),
     ),
   );
 
