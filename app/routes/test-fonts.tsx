@@ -3,19 +3,18 @@ import TestFontsForm, { loadTestFontsFormQuery } from "fontdue-js/TestFontsForm"
 import NewsletterSignup, {
   loadNewsletterSignupQuery,
 } from "fontdue-js/NewsletterSignup";
-import { fontdueGraphql } from "../lib/graphql";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Test fonts — fontdue-js on RR7" }];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  // This page only preloads fontdue-js components; `preview` forwards the staff
-  // token (when previewing) so unpublished fonts show up here too.
-  const { preview } = fontdueGraphql(request);
+export async function loader() {
+  // This page only preloads fontdue-js components. When staff are previewing,
+  // these reveal unpublished fonts too — preview rides the ambient context set
+  // by the root middleware, so nothing is threaded here.
   const [testFontsPreload, newsletterPreload] = await Promise.all([
-    loadTestFontsFormQuery(preview),
-    loadNewsletterSignupQuery(preview),
+    loadTestFontsFormQuery(),
+    loadNewsletterSignupQuery(),
   ]);
   return { testFontsPreload, newsletterPreload };
 }

@@ -4,7 +4,7 @@ import CharacterViewer, {
   loadCharacterViewerQuery,
 } from "fontdue-js/CharacterViewer";
 import BuyButton, { loadBuyButtonQuery } from "fontdue-js/BuyButton";
-import { fontdueGraphql } from "../lib/graphql";
+import { fetchGraphql } from "../lib/graphql";
 import FontDoc from "../queries/Font.graphql?raw";
 import type {
   FontQuery,
@@ -20,11 +20,11 @@ export function meta({ data }: Route.MetaArgs) {
 
 // Server-preloaded fontdue-js queries hydrate the islands; the GraphQL
 // fetch supplies the page chrome (title, description, hero image, buy
-// button props). All four run in parallel in one Promise.all.
-export async function loader({ params, request }: Route.LoaderArgs) {
-  // Request-bound fetcher; in preview this page resolves even for an
-  // unpublished collection and its islands reveal unpublished styles.
-  const { fetchGraphql, preview } = fontdueGraphql(request);
+// button props). All four run in parallel in one Promise.all. In preview
+// this page resolves even for an unpublished collection and its islands
+// reveal unpublished styles — preview rides the ambient context, so nothing
+// is threaded here (see app/lib/graphql.ts).
+export async function loader({ params }: Route.LoaderArgs) {
   const [
     fontData,
     typeTestersPreload,
@@ -34,9 +34,9 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     fetchGraphql<FontQuery, FontQueryVariables>("Font", FontDoc, {
       slug: params.slug,
     }),
-    loadTypeTestersQuery({ collectionSlug: params.slug }, preview),
-    loadCharacterViewerQuery({ collectionSlug: params.slug }, preview),
-    loadBuyButtonQuery({ collectionSlug: params.slug }, preview),
+    loadTypeTestersQuery({ collectionSlug: params.slug }),
+    loadCharacterViewerQuery({ collectionSlug: params.slug }),
+    loadBuyButtonQuery({ collectionSlug: params.slug }),
   ]);
 
   const collection = fontData.viewer.slug?.fontCollection;

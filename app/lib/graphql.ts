@@ -1,33 +1,22 @@
 import { createFontdueFetch, FontdueNotFoundError } from "fontdue-js/server";
-import { previewAuthHeaders, readPreviewToken } from "fontdue-js/preview";
 
-// Bind a Fontdue GraphQL fetcher for the current request. When a staff member
-// is previewing, their token — set as a cookie by the /api/preview route — is
-// forwarded so the response includes unpublished ("hidden") fonts; for the
-// public it's a plain fetch. createFontdueFetch (from fontdue-js) handles the
-// URL, the POST and error handling, so there's no transport boilerplate here.
+// A single server-side GraphQL fetcher for the whole app. It resolves the
+// Fontdue URL from the environment and handles the POST and error handling, so
+// there's no transport boilerplate in the loaders.
 //
-// Call it at the top of a loader, which receives the request:
+// There's no per-request binding: because the root route's middleware (see
+// app/root.tsx) wraps every loader in runWithPreview, this fetcher automatically
+// forwards the staff preview token when a staff member is previewing (revealing
+// unpublished fonts), and sends a plain request otherwise. The same is true of
+// every fontdue-js preload helper (loadTypeTesterQuery, loadFontdueProviderQuery,
+// …) — call them with just their variables and they pick up preview from the
+// ambient context.
 //
-//   export async function loader({ request }: Route.LoaderArgs) {
-//     const { fetchGraphql, preview } = fontdueGraphql(request);
+// Use it at the top of a loader:
+//
+//   export async function loader() {
 //     const data = await fetchGraphql<IndexQuery>("Index", IndexDoc);
 //   }
-//
-// `preview` is an options object ({ headers }) understood by both
-// createFontdueFetch and every fontdue-js preload helper, so the same object
-// wires preview into all of them — pass it to preloads too, e.g.
-// loadTypeTesterQuery(vars, preview), so they reveal unpublished fonts. For the
-// public the headers are empty, so it's always safe to pass. `previewing` lets
-// the root loader keep preview pages out of the CDN cache.
-export function fontdueGraphql(request: Request) {
-  const token = readPreviewToken(request.headers.get("cookie"));
-  const preview = { headers: previewAuthHeaders(token) };
-  return {
-    fetchGraphql: createFontdueFetch(preview),
-    preview,
-    previewing: token != null,
-  };
-}
+export const fetchGraphql = createFontdueFetch();
 
 export { FontdueNotFoundError };
