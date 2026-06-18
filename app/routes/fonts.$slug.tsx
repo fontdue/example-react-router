@@ -20,7 +20,10 @@ export function meta({ data }: Route.MetaArgs) {
 
 // Server-preloaded fontdue-js queries hydrate the islands; the GraphQL
 // fetch supplies the page chrome (title, description, hero image, buy
-// button props). All four run in parallel in one Promise.all.
+// button props). All four run in parallel in one Promise.all. In preview
+// this page resolves even for an unpublished collection and its islands
+// reveal unpublished styles — preview rides the ambient context, so nothing
+// is threaded here (see app/lib/graphql.ts).
 export async function loader({ params }: Route.LoaderArgs) {
   const [
     fontData,

@@ -18,7 +18,9 @@ export function meta({}: Route.MetaArgs) {
 // The loader is the SSR data layer: a regular GraphQL fetch and the
 // fontdue-js Relay preloads run together in one Promise.all. The Relay
 // payloads hydrate the islands without an extra round-trip; the GraphQL
-// data drives the static markup of the page.
+// data drives the static markup of the page. In preview it lists
+// unpublished collections too — preview rides the ambient context, so
+// nothing is threaded here (see app/lib/graphql.ts).
 export async function loader() {
   const indexData = await fetchGraphql<IndexQuery>("Index", IndexDoc);
 

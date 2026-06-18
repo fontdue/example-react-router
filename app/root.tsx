@@ -11,6 +11,7 @@ import {
 import FontdueProvider, { loadFontdueProviderQuery } from "fontdue-js/FontdueProvider";
 import StoreModal from "fontdue-js/StoreModal";
 import CartButton from "fontdue-js/CartButton";
+import { runWithPreview } from "fontdue-js/preview/server";
 
 import type { Route } from "./+types/root";
 import "./app.css";
@@ -19,13 +20,24 @@ import { fetchGraphql } from "./lib/graphql";
 import RootLayoutDoc from "./queries/RootLayout.graphql?raw";
 import type { RootLayoutQuery } from "./queries/operations-types";
 
+// Root middleware wraps every loader on every route. runWithPreview puts the
+// admin preview token (from the preview cookie) into an ambient context for the
+// whole request, so the fetcher and all fontdue-js preloads reveal unpublished
+// fonts with no per-loader plumbing — and it forces preview responses out of
+// the shared CDN cache so an admin render is never served to the public. Public
+// requests pass through untouched and stay cacheable (see `headers` below).
+export const middleware: Route.MiddlewareFunction[] = [
+  ({ request }, next) => runWithPreview(request, next),
+];
+
 // The route loader is the SSR data layer — equivalent to Astro's
 // frontmatter or Next's `async function RootLayout()` server component.
 // fontdue-js Relay preloads and the raw RootLayout GraphQL fetch run in
 // parallel: one network round-trip's worth of latency for the whole
 // layout. The fontdue payloads commit into the client Relay env on
 // hydration; the GraphQL data drives the static chrome (logo, nav,
-// footer, settings).
+// footer, settings). In preview, both reveal unpublished fonts
+// automatically (see app/lib/graphql.ts).
 export async function loader() {
   const [fontduePreload, layoutData] = await Promise.all([
     loadFontdueProviderQuery(),
@@ -41,6 +53,8 @@ export async function loader() {
 // holds. Tag every page with `fontdue` so /api/revalidate can purge
 // them all at once when Fontdue data changes. Leaf-route headers in
 // RR7 override these — api.revalidate.ts sets `no-store` to opt out.
+// Preview renders never reach the cache: the root middleware rewrites
+// these to `private, no-store` on the way out.
 export function headers() {
   return {
     "Netlify-CDN-Cache-Control":
