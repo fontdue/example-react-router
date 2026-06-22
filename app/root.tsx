@@ -64,19 +64,6 @@ export function headers() {
   };
 }
 
-export const links: Route.LinksFunction = () => [
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
-  },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-  },
-];
-
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -161,7 +148,7 @@ function SiteHeader({
   const { pathname } = useLocation();
   const isActive = (href: string) => pathname === href;
   const linkClass = (href: string) =>
-    `text-gray-800 no-underline hover:underline ${isActive(href) ? "font-semibold" : "font-normal"}`;
+    `text-gray-800 hover:underline ${isActive(href) ? "underline" : "no-underline"}`;
 
   return (
     <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-8 py-4">
