@@ -4,6 +4,8 @@ import CharacterViewer, {
   loadCharacterViewerQuery,
 } from "fontdue-js/CharacterViewer";
 import BuyButton, { loadBuyButtonQuery } from "fontdue-js/BuyButton";
+import { FontduePasswordProtectedError } from "fontdue-js/server";
+import NodePasswordForm from "fontdue-js/NodePasswordForm";
 import { fetchGraphql } from "../lib/graphql";
 import FontDoc from "../queries/Font.graphql?raw";
 import type {
@@ -12,6 +14,9 @@ import type {
 } from "../queries/operations-types";
 
 export function meta({ data }: Route.MetaArgs) {
+  if (data?.locked) {
+    return [{ title: "Password required — fontdue-js on RR7" }];
+  }
   const collection = data?.collection;
   const title =
     collection?.pageMetadata?.title ?? collection?.name ?? "Font detail";
@@ -25,19 +30,28 @@ export function meta({ data }: Route.MetaArgs) {
 // reveal unpublished styles — preview rides the ambient context, so nothing
 // is threaded here (see app/lib/graphql.ts).
 export async function loader({ params }: Route.LoaderArgs) {
-  const [
-    fontData,
+  let fontData,
     typeTestersPreload,
     characterViewerPreload,
-    buyButtonPreload,
-  ] = await Promise.all([
-    fetchGraphql<FontQuery, FontQueryVariables>("Font", FontDoc, {
-      slug: params.slug,
-    }),
-    loadTypeTestersQuery({ collectionSlug: params.slug }),
-    loadCharacterViewerQuery({ collectionSlug: params.slug }),
-    loadBuyButtonQuery({ collectionSlug: params.slug }),
-  ]);
+    buyButtonPreload;
+  try {
+    [fontData, typeTestersPreload, characterViewerPreload, buyButtonPreload] =
+      await Promise.all([
+        fetchGraphql<FontQuery, FontQueryVariables>("Font", FontDoc, {
+          slug: params.slug,
+        }),
+        loadTypeTestersQuery({ collectionSlug: params.slug }),
+        loadCharacterViewerQuery({ collectionSlug: params.slug }),
+        loadBuyButtonQuery({ collectionSlug: params.slug }),
+      ]);
+  } catch (error) {
+    // The collection is password-protected and the visitor hasn't unlocked it.
+    // Render the password form instead of a 404 — it exists, it's just gated.
+    if (error instanceof FontduePasswordProtectedError) {
+      return { locked: true as const, slug: params.slug };
+    }
+    throw error;
+  }
 
   const collection = fontData.viewer.slug?.fontCollection;
   if (!collection) {
@@ -45,6 +59,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   }
 
   return {
+    locked: false as const,
     collection,
     typeTestersPreload,
     characterViewerPreload,
@@ -53,6 +68,18 @@ export async function loader({ params }: Route.LoaderArgs) {
 }
 
 export default function FontDetail({ loaderData }: Route.ComponentProps) {
+  if (loaderData.locked) {
+    return (
+      <>
+        <h1 className="my-2 mb-4 text-5xl leading-[1.05]">Password required</h1>
+        <p className="mb-6 text-lg text-gray-700">
+          This collection is password-protected. Enter the password to view it.
+        </p>
+        <NodePasswordForm collectionSlug={loaderData.slug} />
+      </>
+    );
+  }
+
   const {
     collection,
     typeTestersPreload,
