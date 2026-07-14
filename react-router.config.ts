@@ -5,9 +5,9 @@ export default {
   ssr: true,
   future: {
     // Route middleware (stable since React Router 7.9). The root route's
-    // middleware wraps every loader in runWithPreview so the staff preview
-    // token reaches fontdue-js fetches/preloads automatically. Opt-in now; the
-    // default in the next major.
+    // middleware wraps every loader in runWithFontdue so the staff preview token
+    // and a visitor's collection-unlock token reach fontdue-js fetches/preloads
+    // automatically. Opt-in now; the default in the next major.
     v8_middleware: true,
   },
 } satisfies Config;

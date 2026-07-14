@@ -11,7 +11,7 @@ import {
 import FontdueProvider, { loadFontdueProviderQuery } from "fontdue-js/FontdueProvider";
 import StoreModal from "fontdue-js/StoreModal";
 import CartButton from "fontdue-js/CartButton";
-import { runWithPreview } from "fontdue-js/preview/server";
+import { runWithFontdue } from "fontdue-js/server/middleware";
 
 import type { Route } from "./+types/root";
 import "./app.css";
@@ -20,14 +20,17 @@ import { fetchGraphql } from "./lib/graphql";
 import RootLayoutDoc from "./queries/RootLayout.graphql?raw";
 import type { RootLayoutQuery } from "./queries/operations-types";
 
-// Root middleware wraps every loader on every route. runWithPreview puts the
-// admin preview token (from the preview cookie) into an ambient context for the
-// whole request, so the fetcher and all fontdue-js preloads reveal unpublished
-// fonts with no per-loader plumbing — and it forces preview responses out of
-// the shared CDN cache so an admin render is never served to the public. Public
-// requests pass through untouched and stay cacheable (see `headers` below).
+// Root middleware wraps every loader on every route. runWithFontdue puts two
+// request-scoped tokens into an ambient context for the whole request: the admin
+// preview token (reveals unpublished fonts) and the visitor's per-collection
+// node-access token (a collection they unlocked with a password). The fetcher
+// and all fontdue-js preloads forward them with no per-loader plumbing — and it
+// forces a per-visitor response out of the shared CDN cache so an admin's (or an
+// unlocked visitor's) render is never served to the public. Public requests pass
+// through untouched and stay cacheable (see `headers` below). (runWithFontdue is
+// runWithPreview composed with runWithNodeAccess; mount either alone for one.)
 export const middleware: Route.MiddlewareFunction[] = [
-  ({ request }, next) => runWithPreview(request, next),
+  ({ request }, next) => runWithFontdue(request, next),
 ];
 
 // The route loader is the SSR data layer — equivalent to Astro's
